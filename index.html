@@ -183,6 +183,13 @@ const HU_PUSH=S(
   suited('A','2'),suited('K','2'),suited('Q','2'),suited('J','4'),suited('T','5'),suited('9','5'),suited('8','5'),'75s','64s','54s',
   offs('A','2'),offs('K','4'),offs('Q','7'),offs('J','8'),offs('T','8'),'98o','87o'
 );
+
+/* アンティあり時の「通常オープン」拡大（後方スティールを少し広げる） */
+const ANTE_OPEN={
+  CO: S([...RFI.BTN]),                                  // COはBTN相当まで広げる
+  BTN:S([...RFI.BTN],offs('K','5'),offs('Q','7'),offs('J','7'),offs('T','7'),'97o','87o','J6s','T6s','85s'),
+  SB: S([...RFI.SB], offs('K','6'),offs('Q','8'),offs('J','8'),offs('T','8'),'97o','J6s','T6s','96s','85s')
+};
 const TIER1=new Set(['AA','KK','QQ','AKs','AKo']);
 const TIER2=new Set(['JJ','TT','AQs','AQo','AJs','KQs']);
 const TIER3=new Set(['99','88','77','ATs','KJs','QJs','JTs','AJo','KQo','A5s','A4s']);
@@ -215,7 +222,10 @@ function adviseRFI(h,hero){
     return act('fold','フォールド',
       `カモ卓：ブラフは効かない相手。ドミネートされる弱い手は降り、強い手で確実に取る。${wider}`,'—');
   }
-  if(RFI[key].has(h))return act('raise','レイズ',`${hero}のオープンレンジ内${wider}。主導権を取って参加。`,hero==='SB'?'約3BB':'2.5〜3BB');
+  const useAnteOpen=ante&&ANTE_OPEN[key];
+  const openRange=useAnteOpen?ANTE_OPEN[key]:RFI[key];
+  const anteNote=useAnteOpen?'（アンティありで後方スティールを拡大）':'';
+  if(openRange.has(h))return act('raise','レイズ',`${hero}のオープンレンジ内${wider}${anteNote}。主導権を取って参加。`,hero==='SB'?'約3BB':'2.5〜3BB');
   return act('fold','フォールド',`${hero}のオープン外${wider}。強い手×良い位置に絞る。`,'—');
 }
 function adviseVsRaise(h,hero,raiser){
