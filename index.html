@@ -33,6 +33,7 @@
     border-radius:7px;padding:7px 4px;font-size:13px;font-weight:700;cursor:pointer}
   .btn.on{background:#0a7a4d;border-color:#0fa968;color:#fff}
   .btn.sub{font-size:12px;font-weight:600}
+  .btn:disabled{opacity:.3;cursor:not-allowed}
   .bar.mini .btn{padding:5px 3px;font-size:12px;min-width:34px;font-weight:600}
   .bar.mini .lbl{font-size:9px;margin-bottom:-3px}
   .btn.quick{flex:1;background:#0e5c3a;border-color:#0fa968;color:#fff;font-size:14px;font-weight:800;padding:9px 6px}
@@ -350,18 +351,29 @@ for(let i=0;i<13;i++)for(let j=0;j<13;j++){
   gridEl.appendChild(d);cells.push(d);
 }
 
+/* 状況の切替（ボタン表示・サブバーの出し分けをまとめる） */
+function setScenario(s){
+  scenario=s;
+  document.querySelectorAll('.sc').forEach(x=>x.classList.toggle('on',x.dataset.s===s));
+  $('raiserBar').style.display=s==='raise'?'flex':'none';
+  $('limpBar').style.display=s==='limp'?'flex':'none';
+  $('tbBar').style.display=s==='threebet'?'flex':'none';
+  if(s==='threebet')buildTb();
+}
+/* BBでは「全員フォールド」は結果自明なので無効化し、必要なら前の人がレイズへ */
+function applyHeroScenarioRules(){
+  const rfiBtn=document.querySelector('.sc[data-s="rfi"]');
+  if(hero==='BB'){rfiBtn.disabled=true; if(scenario==='rfi')setScenario('raise');}
+  else rfiBtn.disabled=false;
+}
+
 /* ポジション・状況ボタン */
 document.querySelectorAll('.pos').forEach(b=>b.onclick=()=>{
   hero=b.dataset.p;document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x===b));
-  buildTb();render();
+  applyHeroScenarioRules();buildTb();render();
 });
 document.querySelectorAll('.sc').forEach(b=>b.onclick=()=>{
-  scenario=b.dataset.s;document.querySelectorAll('.sc').forEach(x=>x.classList.toggle('on',x===b));
-  $('raiserBar').style.display=scenario==='raise'?'flex':'none';
-  $('limpBar').style.display=scenario==='limp'?'flex':'none';
-  $('tbBar').style.display=scenario==='threebet'?'flex':'none';
-  if(scenario==='threebet')buildTb();
-  render();
+  setScenario(b.dataset.s);render();
 });
 document.querySelectorAll('.lp').forEach(b=>b.onclick=()=>{
   numLimpers=+b.dataset.l;
@@ -418,7 +430,7 @@ function applySeats(){
     document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x.dataset.p===hero));
   }
   $('seatNote').textContent = tableCount===2?'　＝ ヘッズアップ（SBがボタン）':`　＝ ${tableCount}人`;
-  buildTb();render();
+  applyHeroScenarioRules();buildTb();render();
 }
 document.querySelectorAll('.cnt').forEach(b=>b.onclick=()=>{
   tableCount=+b.dataset.c;
@@ -431,7 +443,8 @@ $('btnNext').onclick=()=>{
   const i=act.indexOf(hero);
   hero=act[(i-1+act.length)%act.length];
   document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x.dataset.p===hero));
-  buildTb();render();
+  setScenario(hero==='BB'?'raise':'rfi'); // 席移動で状況を「全員フォールド」に戻す（BBは前の人がレイズ）
+  applyHeroScenarioRules();buildTb();render();
 };
 // 人数マイナス：誰か飛んだ
 $('btnDec').onclick=()=>{
