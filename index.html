@@ -88,7 +88,8 @@
     <div class="lbl">チャートのモード</div>
     <label class="cb"><input type="checkbox" id="cbBeginner"> 初心者卓（カモ卓）モード</label>
     <label class="cb"><input type="checkbox" id="cbPush"> プッシュ/フォールド（15BB以下）</label>
-    <span style="font-size:11px;color:var(--sub)">スタックが短い時：オールイン or 降りの二択に切替</span>
+    <label class="cb"><input type="checkbox" id="cbAnte"> アンティあり（全員）</label>
+    <span style="font-size:11px;color:var(--sub)">短いスタック→オールイン二択／アンティ→プッシュ範囲を広げる</span>
   </div>
 
   <!-- 状況 -->
@@ -192,8 +193,13 @@ function adviseRFI(h,hero){
   if(pushFold){
     const key=rangeKeyFor(hero);
     if(key==='BB')return act('check','チェック','全員Fなら不戦勝。','—');
-    const range=(tableCount===2&&hero==='SB')?HU_PUSH:PUSH[key];
-    if(range.has(h))return act('shove','オールイン','短いスタック：レイズせず全額プッシュ。降ろせて勝ち、コールされても勝負できる手。','全部（オールイン）');
+    let range;
+    if(tableCount===2&&hero==='SB')range=HU_PUSH;
+    else if(ante)range=(key==='SB')?HU_PUSH:PUSH[ANTE_PUSH_SHIFT[key]];
+    else range=PUSH[key];
+    const note=ante?'アンティあり：デッドマネーが多いのでプッシュ範囲を広げる。降ろせて勝ち、コールされても勝負できる手。'
+                   :'短いスタック：レイズせず全額プッシュ。降ろせて勝ち、コールされても勝負できる手。';
+    if(range.has(h))return act('shove','オールイン',note,'全部（オールイン）');
     return act('fold','フォールド','短いスタック：プッシュ圏外。降りて、より良い手で勝負する。','—');
   }
   if(tableCount===2&&hero==='SB'){
@@ -217,7 +223,7 @@ function adviseVsRaise(h,hero,raiser){
     const t=getTier(h),loose=['CO','BTN','SB'].includes(rangeKeyFor(raiser)),isPair=(h.length===2);
     if(t<=2)return act('call','オールインにコール','十分強い。受けて勝負。','—');
     if(isPair)return act('call','オールインにコール','ペアは勝率十分。プッシュに付き合う。','—');
-    if(loose&&(t===3||h.startsWith('A')))return act('call','オールインにコール','相手のプッシュが広いので、A入り・好スーテッドでもコール。','—');
+    if((loose||ante)&&(t===3||h.startsWith('A')))return act('call','オールインにコール',ante?'アンティあり：ポットが大きく価格が良いので、A入り・好スーテッドでもコール。':'相手のプッシュが広いので、A入り・好スーテッドでもコール。','—');
     return act('fold','フォールド','相手のオールインに対しコール圏外。降りる。','—');
   }
   if(tableCount===2){ // ヘッズアップ：BBが超ワイドなSBオープンに対応
@@ -242,7 +248,7 @@ function adviseVsRaise(h,hero,raiser){
     if(!ip&&!loose&&ob)return act('fold','フォールド','オフスート役をOOPで前方レイズに合わせるのは不利。','—');
     return act('call','コール',`${ip?'IPで':'価格的に'}プレイ可。セット・好フロップ狙い。`,'—');}
   if(t===4){if(ip&&(loose||hero==='BTN'))return act('call','コール','IPなので安く参加しヒット時に取る。','—');
-    if(hero==='BB'&&loose)return act('call','コール','BBは価格でディフェンス。','—');
+    if(hero==='BB'&&(loose||ante))return act('call','コール',ante?'BBはアンティ込みで価格が良く、広くディフェンス。':'BBは価格でディフェンス。','—');
     return act('fold','フォールド','投機手はポジション無いと利益化しにくい。','—');}
   return act('fold','フォールド','レンジ外。見送り。','—');
 }
@@ -283,8 +289,10 @@ function adviseFacing3bet(h,hero,tb){
 
 /* ===== 状態 ===== */
 let hero='BTN', scenario='rfi', raiser=null, selNote=null;
-let tableCount=6, beginnerMode=false, pushFold=false;
+let tableCount=6, beginnerMode=false, pushFold=false, ante=false;
 let numLimpers=1, threebettor=null;
+/* アンティ時：プッシュ範囲を一段広い位置のものに（SBはHU並みに広い） */
+const ANTE_PUSH_SHIFT={UTG:'MP',MP:'CO',CO:'BTN',BTN:'SB',SB:'SB'};
 
 /* 卓にいる席の集合（人数で決まる。トーナメントで減っていく想定） */
 const SEATS_BY_COUNT={
@@ -423,6 +431,7 @@ function updateBanner(){
 }
 $('cbBeginner').onchange=e=>{beginnerMode=e.target.checked;updateBanner();render();};
 $('cbPush').onchange=e=>{pushFold=e.target.checked;updateBanner();render();};
+$('cbAnte').onchange=e=>{ante=e.target.checked;render();};
 
 updateBanner();
 applySeats();
