@@ -250,19 +250,26 @@ function adviseVsRaise(h,hero,raiser){
 /* リンパー（コールで入った人）がいる場面：アイソレート or チェック/降り */
 function adviseLimp(h,hero){
   const key=rangeKeyFor(hero);
-  const good=TIER1.has(h)||TIER2.has(h)||TIER3.has(h);
+  const many=numLimpers>=2;                 // リンパー2人以上＝多人数の大きいポット
+  const isPair=h.length===2,isSuited=h.endsWith('s');
   const sz=`${4+numLimpers}BB（4＋リンパー${numLimpers}人）`;
+  // 強い手はレイズ（隔離/価値）。多人数になるほど薄い価値の手は絞る
+  const isoStrong=TIER1.has(h)||TIER2.has(h)||(!many&&TIER3.has(h));
+  const isoNote=many?'多人数ポット：薄い手は絞り、強い手だけ大きくレイズして価値を取る。'
+                    :'リンパーは弱いレンジ。価値ある手で大きくレイズして隔離する。';
   if(key==='BB'){
-    if(good)return act('raise','レイズ（アイソレート）','BB：強い手はリンパーを大きめのレイズで罰し、1対1に絞る。',sz);
+    if(isoStrong)return act('raise','レイズ（アイソレート）','BB：'+isoNote,sz);
     return act('check','チェック','BB：追加投資なしでフロップが見れる。乗らない手はチェックで無料で見る。','—');
   }
-  if(good)return act('raise','レイズ（アイソレート）','リンパーは弱いレンジ。価値ある手で大きくレイズして隔離する。',sz);
+  if(isoStrong)return act('raise','レイズ（アイソレート）',isoNote,sz);
+  // 投機的に安く見る。多人数ほどインプライドオッズが旨いので参加を広げる
   const late=['CO','BTN','SB'].includes(rangeKeyFor(hero));
-  if((h.length===2||h.endsWith('s'))&&RFI.BTN.has(h)){
-    if(late)return act('call','コール（オーバーリンプ）','投機的だがフロップで化ける手（小ペア・スーテッド）。安く多人数で見て、セット・フラッシュを狙う。','リンパーに合わせる（安い）');
+  if((isPair||isSuited)&&RFI.BTN.has(h)){
+    if(late||many)return act('call','コール（オーバーリンプ）',
+      `ペア・スーテッドで安く参加。${many?'リンパーが多く、セット/フラッシュのインプライドオッズが大きい。':'ポジションがあるので安く見てセット・フラッシュを狙う。'}`,'リンパーに合わせる（安い）');
     return act('fold','フォールド','投機手だが後ろに人が多くポジションが悪い。無理に乗らず降りる。','—');
   }
-  return act('fold','フォールド','多人数で勝ちにくいオフスート系。降りる。','—');
+  return act('fold','フォールド','多人数で勝ちにくいオフスート系（特にオフスートのブロードウェイ）。降りる。','—');
 }
 
 /* 自分のオープンに3ベットされた場面：4ベット / コール / 降り */
