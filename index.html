@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プリフロップ・トレーナー（高速版）</title>
+<style>
+  :root{
+    --bg:#10161a; --panel:#1b242a; --line:#2c3a42; --txt:#e8eef0; --sub:#9fb0b8;
+    --raise:#2e9e5b; --threebet:#1f8a52; --call:#d8a200; --fold:#3a474e; --check:#3aa0a0; --shove:#d24b2a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Meiryo",sans-serif}
+  .wrap{max-width:680px;margin:0 auto;padding:10px}
+  /* 上部の答え（デカ表示） */
+  #answer{border-radius:14px;padding:14px 16px;margin-bottom:10px;
+    display:flex;align-items:center;gap:14px;min-height:74px;transition:background .12s}
+  #answer .big{font-size:32px;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+  #answer .info{font-size:13px;line-height:1.45;opacity:.95}
+  #answer .info b{font-size:14px}
+  .a-raise{background:var(--raise);color:#fff}
+  .a-threebet{background:var(--threebet);color:#fff}
+  .a-call{background:var(--call);color:#1a1300}
+  .a-fold{background:#48565e;color:#dfe7ea}
+  .a-check{background:var(--check);color:#04201f}
+  .a-shove{background:var(--shove);color:#fff}
+  .a-none{background:var(--panel);color:var(--sub)}
+  /* ボタン列 */
+  .bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+  .bar .lbl{font-size:11px;color:var(--sub);width:100%;margin-bottom:-2px}
+  .btn{flex:1;min-width:54px;background:#0f1418;color:var(--txt);border:1px solid var(--line);
+    border-radius:9px;padding:11px 6px;font-size:15px;font-weight:700;cursor:pointer}
+  .btn.on{background:#0a7a4d;border-color:#0fa968;color:#fff}
+  .btn.sub{font-size:13px;font-weight:600}
+  #raiserBar{display:none}
+  .cb{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:var(--txt);cursor:pointer}
+  .cb input{width:18px;height:18px;accent-color:#0fa968}
+  /* グリッド */
+  .grid{display:grid;grid-template-columns:repeat(13,1fr);gap:2px;margin-top:4px}
+  .cell{aspect-ratio:1/1;border-radius:4px;display:flex;align-items:center;justify-content:center;
+    font-size:clamp(8px,2.2vw,12px);font-weight:700;cursor:pointer;user-select:none;color:#06120c}
+  .cell.sel{outline:3px solid #fff;outline-offset:-1px}
+  .bg-raise{background:var(--raise);color:#fff}
+  .bg-threebet{background:var(--threebet);color:#fff}
+  .bg-call{background:var(--call);color:#1a1300}
+  .bg-fold{background:#39454c;color:#8497a0}
+  .bg-check{background:var(--check);color:#04201f}
+  .bg-shove{background:var(--shove);color:#fff}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--sub);justify-content:center}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .hint{font-size:11px;color:var(--sub);text-align:center;margin:8px 0 2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 答え -->
+  <div id="answer" class="a-none">
+    <div class="big" id="bigAct">手をタップ</div>
+    <div class="info" id="info">下の表で自分の手を1タップ。上にサイズと理由が出ます。</div>
+  </div>
+
+  <!-- ポジション -->
+  <div class="bar">
+    <div class="lbl">自分のポジション</div>
+    <button class="btn pos" data-p="UTG">UTG</button>
+    <button class="btn pos" data-p="MP">MP</button>
+    <button class="btn pos" data-p="CO">CO</button>
+    <button class="btn pos on" data-p="BTN">BTN</button>
+    <button class="btn pos" data-p="SB">SB</button>
+    <button class="btn pos" data-p="BB">BB</button>
+  </div>
+
+  <!-- テーブルの人数 -->
+  <div class="bar">
+    <div class="lbl">テーブルの人数（トーナメントで減っていく）<span id="seatNote" style="font-weight:400;color:var(--sub)"></span></div>
+    <button class="btn cnt on" data-c="6">6人</button>
+    <button class="btn cnt" data-c="5">5人</button>
+    <button class="btn cnt" data-c="4">4人</button>
+    <button class="btn cnt" data-c="3">3人</button>
+    <button class="btn cnt" data-c="2">HU(2人)</button>
+  </div>
+
+  <!-- チャートのモード -->
+  <div class="bar" style="gap:14px">
+    <div class="lbl">チャートのモード</div>
+    <label class="cb"><input type="checkbox" id="cbBeginner"> 初心者卓（カモ卓）モード</label>
+    <label class="cb"><input type="checkbox" id="cbPush"> プッシュ/フォールド（15BB以下）</label>
+    <span style="font-size:11px;color:var(--sub)">スタックが短い時：オールイン or 降りの二択に切替</span>
+  </div>
+
+  <!-- 状況 -->
+  <div class="bar">
+    <div class="lbl">状況</div>
+    <button class="btn sub sc on" data-s="rfi">全員フォールド</button>
+    <button class="btn sub sc" data-s="raise">前の人がレイズ</button>
+    <button class="btn sub sc" data-s="limp">リンパーあり</button>
+    <button class="btn sub sc" data-s="threebet">3ベットされた</button>
+  </div>
+
+  <!-- レイザー位置 -->
+  <div class="bar" id="raiserBar">
+    <div class="lbl">レイズした人の位置</div>
+  </div>
+
+  <!-- リンパー人数 -->
+  <div class="bar" id="limpBar" style="display:none">
+    <div class="lbl">リンパー（コールで入った人）の人数</div>
+    <button class="btn sub lp on" data-l="1">1人</button>
+    <button class="btn sub lp" data-l="2">2人</button>
+    <button class="btn sub lp" data-l="3">3人</button>
+  </div>
+
+  <!-- 3ベットした人の位置 -->
+  <div class="bar" id="tbBar" style="display:none">
+    <div class="lbl">3ベットした人の位置</div>
+  </div>
+
+  <div id="modeBanner" style="text-align:center;font-size:13px;font-weight:700;padding:6px;border-radius:8px;margin:2px 0 6px;background:#1b242a;color:var(--sub)">通常版（GTOベース・100BB）</div>
+  <div class="hint">上三角＝スーテッド / 対角＝ペア / 下三角＝オフスート</div>
+  <div class="grid" id="grid"></div>
+
+  <div class="legend">
+    <span><i class="sw bg-shove"></i>オールイン</span>
+    <span><i class="sw bg-raise"></i>オープン</span>
+    <span><i class="sw bg-threebet"></i>3ベット</span>
+    <span><i class="sw bg-call"></i>コール</span>
+    <span><i class="sw bg-check"></i>チェック</span>
+    <span><i class="sw bg-fold"></i>フォールド</span>
+  </div>
+</div>
+
+<script>
+/* ===== データ ===== */
+const RANKS=['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+const ri=r=>RANKS.indexOf(r);
+const preIdx ={UTG:0,MP:1,CO:2,BTN:3,SB:4,BB:5};
+const postIdx={SB:0,BB:1,UTG:2,MP:3,CO:4,BTN:5};
+function pairs(min){const o=[];for(const r of RANKS)if(ri(r)<=ri(min))o.push(r+r);return o;}
+function suited(h,km){const o=[],hi=ri(h);for(const k of RANKS){const ki=ri(k);if(ki>hi&&ki<=ri(km))o.push(h+k+'s');}return o;}
+function offs(h,km){const o=[],hi=ri(h);for(const k of RANKS){const ki=ri(k);if(ki>hi&&ki<=ri(km))o.push(h+k+'o');}return o;}
+function S(...p){const s=new Set();for(const x of p){Array.isArray(x)?x.forEach(y=>s.add(y)):s.add(x);}return s;}
+
+const RFI={
+  UTG:S(pairs('2'),suited('A','2'),suited('K','T'),suited('Q','T'),'JTs','T9s','98s','87s','76s',offs('A','J'),'KQo'),
+  MP: S(pairs('2'),suited('A','2'),suited('K','9'),suited('Q','9'),suited('J','9'),suited('T','8'),suited('9','7'),'87s','76s','65s',offs('A','T'),offs('K','J'),'QJo'),
+  CO: S(pairs('2'),suited('A','2'),suited('K','7'),suited('Q','8'),suited('J','8'),suited('T','8'),suited('9','7'),suited('8','6'),suited('7','5'),suited('6','4'),'54s',offs('A','9'),offs('K','T'),offs('Q','T'),'JTo'),
+  BTN:S(pairs('2'),suited('A','2'),suited('K','2'),suited('Q','5'),suited('J','7'),suited('T','7'),suited('9','6'),suited('8','6'),suited('7','5'),suited('6','4'),suited('5','3'),'43s',offs('A','2'),offs('K','8'),offs('Q','9'),offs('J','9'),'T9o','98o'),
+  SB: S(pairs('2'),suited('A','2'),suited('K','5'),suited('Q','7'),suited('J','8'),suited('T','8'),suited('9','7'),suited('8','6'),suited('7','5'),'65s','54s',offs('A','4'),offs('K','9'),offs('Q','9'),'JTo','T9o')
+};
+
+/* 初心者卓（カモ卓）用：価値重視。弱いオフスートを切り、ペア＆スーテッドを残す */
+const EXP={
+  UTG:S(pairs('2'),suited('A','2'),suited('K','9'),suited('Q','9'),suited('J','9'),suited('T','8'),suited('9','7'),'87s','76s','65s','54s',offs('A','J'),'KQo'),
+  MP: S(pairs('2'),suited('A','2'),suited('K','8'),suited('Q','8'),suited('J','8'),suited('T','8'),suited('9','7'),suited('8','6'),'76s','65s','54s',offs('A','J'),'KQo'),
+  CO: S(pairs('2'),suited('A','2'),suited('K','7'),suited('Q','8'),suited('J','8'),suited('T','7'),suited('9','6'),suited('8','6'),suited('7','5'),'65s','54s',offs('A','T'),offs('K','J'),'QJo'),
+  BTN:S(pairs('2'),suited('A','2'),suited('K','5'),suited('Q','7'),suited('J','7'),suited('T','7'),suited('9','6'),suited('8','6'),suited('7','5'),suited('6','4'),'54s',offs('A','T'),offs('K','J'),'QJo','JTo'),
+  SB: S(pairs('2'),suited('A','2'),suited('K','8'),suited('Q','8'),suited('J','8'),suited('T','8'),suited('9','7'),suited('8','6'),'76s','65s','54s',offs('A','T'),offs('K','J'),'QJo')
+};
+
+/* ヘッズアップ：ボタン(SB)の超ワイドなオープン（約85%） */
+const HU_SB=S(
+  pairs('2'),
+  suited('A','2'),suited('K','2'),suited('Q','2'),suited('J','2'),suited('T','2'),
+  suited('9','3'),suited('8','3'),suited('7','3'),suited('6','3'),suited('5','3'),'43s','42s','32s',
+  offs('A','2'),offs('K','2'),offs('Q','3'),offs('J','5'),offs('T','6'),offs('9','6'),offs('8','6'),'76o','75o','65o','54o'
+);
+
+/* プッシュ/フォールド（≤15BB）：オープンで全額プッシュするレンジ（約10〜12BB目安・Nashベース） */
+const PUSH={
+  UTG:S(pairs('2'),suited('A','2'),offs('A','T'),suited('K','9'),offs('K','J'),suited('Q','T'),'JTs'),
+  MP: S(pairs('2'),suited('A','2'),offs('A','9'),suited('K','8'),offs('K','T'),suited('Q','9'),'QJo',suited('J','9'),'T9s'),
+  CO: S(pairs('2'),suited('A','2'),offs('A','7'),suited('K','5'),offs('K','9'),suited('Q','8'),offs('Q','T'),suited('J','8'),'JTo',suited('T','8'),'98s','87s'),
+  BTN:S(pairs('2'),suited('A','2'),offs('A','2'),suited('K','2'),offs('K','7'),suited('Q','5'),offs('Q','9'),suited('J','7'),offs('J','9'),suited('T','7'),'T9o',suited('9','7'),'87s','76s','65s'),
+  SB: S(pairs('2'),suited('A','2'),offs('A','2'),suited('K','2'),offs('K','5'),suited('Q','2'),offs('Q','7'),suited('J','5'),offs('J','8'),suited('T','6'),offs('T','9'),suited('9','6'),suited('8','6'),'75s','65s','54s')
+};
+/* ヘッズアップのプッシュ（SBほぼオールイン） */
+const HU_PUSH=S(
+  pairs('2'),
+  suited('A','2'),suited('K','2'),suited('Q','2'),suited('J','4'),suited('T','5'),suited('9','5'),suited('8','5'),'75s','64s','54s',
+  offs('A','2'),offs('K','4'),offs('Q','7'),offs('J','8'),offs('T','8'),'98o','87o'
+);
+const TIER1=new Set(['AA','KK','QQ','AKs','AKo']);
+const TIER2=new Set(['JJ','TT','AQs','AQo','AJs','KQs']);
+const TIER3=new Set(['99','88','77','ATs','KJs','QJs','JTs','AJo','KQo','A5s','A4s']);
+function getTier(h){if(TIER1.has(h))return 1;if(TIER2.has(h))return 2;if(TIER3.has(h))return 3;if(RFI.BTN.has(h))return 4;return 5;}
+
+function act(code,label,reason,size){return{code,label,reason,size};}
+function adviseRFI(h,hero){
+  if(pushFold){
+    const key=rangeKeyFor(hero);
+    if(key==='BB')return act('check','チェック','全員Fなら不戦勝。','—');
+    const range=(tableCount===2&&hero==='SB')?HU_PUSH:PUSH[key];
+    if(range.has(h))return act('shove','オールイン','短いスタック：レイズせず全額プッシュ。降ろせて勝ち、コールされても勝負できる手。','全部（オールイン）');
+    return act('fold','フォールド','短いスタック：プッシュ圏外。降りて、より良い手で勝負する。','—');
+  }
+  if(tableCount===2&&hero==='SB'){
+    if(HU_SB.has(h))return act('raise','レイズ','ヘッズアップ：ボタン(SB)は超ワイドにオープン。捨てるのは最下位のゴミだけ。','約2〜2.5BB');
+    return act('fold','フォールド','ヘッズアップ：最下位クラスのゴミ。これは降りてOK。','—');
+  }
+  const key=rangeKeyFor(hero);
+  if(key==='BB')return act('check','チェック','全員Fなら追加投資なしで獲得。煽る必要なし。','—');
+  const wider=(key!==hero)?`（${hero}は実質${key}相当の広さ）`:'';
+  if(beginnerMode){
+    if(EXP[key].has(h))return act('raise','レイズ（アイソレート）',
+      `カモ卓：価値重視のハンド。リンパーを大きめのレイズで罰し、1対1に持ち込む。${wider}`,'4BB＋リンパー1人ごと+1BB');
+    return act('fold','フォールド',
+      `カモ卓：ブラフは効かない相手。ドミネートされる弱い手は降り、強い手で確実に取る。${wider}`,'—');
+  }
+  if(RFI[key].has(h))return act('raise','レイズ',`${hero}のオープンレンジ内${wider}。主導権を取って参加。`,hero==='SB'?'約3BB':'2.5〜3BB');
+  return act('fold','フォールド',`${hero}のオープン外${wider}。強い手×良い位置に絞る。`,'—');
+}
+function adviseVsRaise(h,hero,raiser){
+  if(pushFold){ // 相手のレイズ＝事実上オールイン。コール or 降り
+    const t=getTier(h),loose=['CO','BTN','SB'].includes(rangeKeyFor(raiser)),isPair=(h.length===2);
+    if(t<=2)return act('call','オールインにコール','十分強い。受けて勝負。','—');
+    if(isPair)return act('call','オールインにコール','ペアは勝率十分。プッシュに付き合う。','—');
+    if(loose&&(t===3||h.startsWith('A')))return act('call','オールインにコール','相手のプッシュが広いので、A入り・好スーテッドでもコール。','—');
+    return act('fold','フォールド','相手のオールインに対しコール圏外。降りる。','—');
+  }
+  if(tableCount===2){ // ヘッズアップ：BBが超ワイドなSBオープンに対応
+    const t=getTier(h);
+    if(t===1)return act('threebet','3ベット','ヘッズアップ：最強級は3ベットで価値を取る。','相手レイズの約3.5倍');
+    if(h.length===2||h.endsWith('s')||HU_SB.has(h))return act('call','コール','ヘッズアップ：BBは安く守れる。広いSBレンジに対して広くディフェンス。','—');
+    return act('fold','フォールド','ヘッズアップ：さすがに弱すぎる手だけ降りる。','—');
+  }
+  const t=getTier(h),loose=['CO','BTN','SB'].includes(rangeKeyFor(raiser)),ip=postIdx[hero]>postIdx[raiser];
+  const sz=ip?'相手レイズの約3倍':'相手レイズの約4倍';
+  if(beginnerMode){
+    // 受け身な相手のレイズ＝本物。タイトに受ける
+    if(t===1)return act('threebet','3ベット（バリュー）','カモ卓：最強クラスだけ価値を取りに3ベット。',sz);
+    if(t===2)return act('call','コール','カモ卓：受け身な相手のレイズは強い。降ろせないので3ベットせずコールで見る。','—');
+    if(t===3&&(h.length===2||h.endsWith('s')))return act('call','コール','カモ卓：ペア/スーテッドはセット・フラッシュ狙いでコール可。','—');
+    return act('fold','フォールド','カモ卓：受け身な相手の本物レイズに、半端な手で付き合わない。','—');
+  }
+  if(t===1)return act('threebet','3ベット',`最強クラス。${ip?'IPで':''}バリュー3ベット。`,sz);
+  if(t===2){if(loose||ip)return act('threebet','3ベット',`${loose?'相手が広い':'ポジション有'}ので3ベットで主導権。`,sz);
+    return act('call','コール','タイトな前方レイズには3ベットせずコール。','—');}
+  if(t===3){const ob=h.endsWith('o');
+    if(!ip&&!loose&&ob)return act('fold','フォールド','オフスート役をOOPで前方レイズに合わせるのは不利。','—');
+    return act('call','コール',`${ip?'IPで':'価格的に'}プレイ可。セット・好フロップ狙い。`,'—');}
+  if(t===4){if(ip&&(loose||hero==='BTN'))return act('call','コール','IPなので安く参加しヒット時に取る。','—');
+    if(hero==='BB'&&loose)return act('call','コール','BBは価格でディフェンス。','—');
+    return act('fold','フォールド','投機手はポジション無いと利益化しにくい。','—');}
+  return act('fold','フォールド','レンジ外。見送り。','—');
+}
+
+/* リンパー（コールで入った人）がいる場面：アイソレート or チェック/降り */
+function adviseLimp(h,hero){
+  const key=rangeKeyFor(hero);
+  const good=TIER1.has(h)||TIER2.has(h)||TIER3.has(h);
+  const sz=`${4+numLimpers}BB（4＋リンパー${numLimpers}人）`;
+  if(key==='BB'){
+    if(good)return act('raise','レイズ（アイソレート）','BB：強い手はリンパーを大きめのレイズで罰し、1対1に絞る。',sz);
+    return act('check','チェック','BB：追加投資なしでフロップが見れる。乗らない手はチェックで無料で見る。','—');
+  }
+  if(good)return act('raise','レイズ（アイソレート）','リンパーは弱いレンジ。価値ある手で大きくレイズして隔離する。',sz);
+  const late=['CO','BTN','SB'].includes(rangeKeyFor(hero));
+  if((h.length===2||h.endsWith('s'))&&RFI.BTN.has(h)){
+    if(late)return act('call','コール（オーバーリンプ）','投機的だがフロップで化ける手（小ペア・スーテッド）。安く多人数で見て、セット・フラッシュを狙う。','リンパーに合わせる（安い）');
+    return act('fold','フォールド','投機手だが後ろに人が多くポジションが悪い。無理に乗らず降りる。','—');
+  }
+  return act('fold','フォールド','多人数で勝ちにくいオフスート系。降りる。','—');
+}
+
+/* 自分のオープンに3ベットされた場面：4ベット / コール / 降り */
+function adviseFacing3bet(h,hero,tb){
+  const t=getTier(h),ip=postIdx[hero]>postIdx[tb];
+  if(t===1)return act('threebet','4ベット（バリュー）','QQ+/AKクラス。4ベットで価値を取りに行く。','相手3ベットの約2.2〜2.5倍');
+  if(t===2)return act('call','コール',`JJ-TT・AQ・KQsなど。${ip?'ポジションがあるので':''}コールしてフロップを見る。`,'—');
+  if(t===3&&(h.length===2||h.endsWith('s'))&&ip)return act('call','コール','ペア/スーテッドはポジションがあればセット・フラッシュ狙いでコール可。','—');
+  return act('fold','フォールド','オープンはしたが、3ベットには割に合わない。見栄を張らず降りる。','—');
+}
+
+/* ===== 状態 ===== */
+let hero='BTN', scenario='rfi', raiser=null, selNote=null;
+let tableCount=6, beginnerMode=false, pushFold=false;
+let numLimpers=1, threebettor=null;
+
+/* 卓にいる席の集合（人数で決まる。トーナメントで減っていく想定） */
+const SEATS_BY_COUNT={
+  6:['UTG','MP','CO','BTN','SB','BB'],
+  5:['UTG','CO','BTN','SB','BB'],
+  4:['UTG','BTN','SB','BB'],
+  3:['BTN','SB','BB'],
+  2:['SB','BB']
+};
+function activeSet(){ return new Set(SEATS_BY_COUNT[tableCount]); }
+/* そのポジションが「後ろに何人残してプレイするか」でレンジを決める
+   （MP/COを外すと残りの席が自動で広くなる） */
+function rangeKeyFor(pos){
+  if(pos==='BB')return 'BB';
+  const act=activeSet(); let n=0;
+  for(const p of Object.keys(preIdx)) if(act.has(p)&&preIdx[p]>preIdx[pos]) n++;
+  return ({0:'BB',1:'SB',2:'BTN',3:'CO',4:'MP',5:'UTG'})[Math.min(n,5)];
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+function adviseFor(note){
+  if(scenario==='rfi')return adviseRFI(note,hero);
+  if(scenario==='limp')return adviseLimp(note,hero);
+  if(scenario==='threebet'){if(!threebettor)return act('none','—','','');return adviseFacing3bet(note,hero,threebettor);}
+  if(!raiser)return act('none','—','','');
+  return adviseVsRaise(note,hero,raiser);
+}
+
+/* グリッド */
+const gridEl=$('grid'),cells=[];
+for(let i=0;i<13;i++)for(let j=0;j<13;j++){
+  let note;
+  if(i<j)note=RANKS[i]+RANKS[j]+'s';
+  else if(i>j)note=RANKS[j]+RANKS[i]+'o';
+  else note=RANKS[i]+RANKS[i];
+  const d=document.createElement('div');d.className='cell';d.textContent=note;d.dataset.note=note;
+  d.onclick=()=>{selNote=note;render();};
+  gridEl.appendChild(d);cells.push(d);
+}
+
+/* ポジション・状況ボタン */
+document.querySelectorAll('.pos').forEach(b=>b.onclick=()=>{
+  hero=b.dataset.p;document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x===b));
+  buildRaiser();buildTb();render();
+});
+document.querySelectorAll('.sc').forEach(b=>b.onclick=()=>{
+  scenario=b.dataset.s;document.querySelectorAll('.sc').forEach(x=>x.classList.toggle('on',x===b));
+  $('raiserBar').style.display=scenario==='raise'?'flex':'none';
+  $('limpBar').style.display=scenario==='limp'?'flex':'none';
+  $('tbBar').style.display=scenario==='threebet'?'flex':'none';
+  if(scenario==='raise')buildRaiser();
+  if(scenario==='threebet')buildTb();
+  render();
+});
+document.querySelectorAll('.lp').forEach(b=>b.onclick=()=>{
+  numLimpers=+b.dataset.l;
+  document.querySelectorAll('.lp').forEach(x=>x.classList.toggle('on',x===b));
+  render();
+});
+
+function buildTb(){
+  const bar=$('tbBar');
+  bar.querySelectorAll('.tbz').forEach(x=>x.remove());
+  const act=activeSet();
+  // 3ベットは自分のレイズの後。後ろの人とは限らない（前のリンパーが被せ返す事もある）→ 自分以外の全席
+  const opts=Object.keys(preIdx).filter(p=>act.has(p)&&p!==hero);
+  if(!opts.includes(threebettor)){const after=opts.filter(p=>preIdx[p]>preIdx[hero]);threebettor=after[0]||opts[0]||null;}
+  opts.forEach(p=>{
+    const b=document.createElement('button');b.className='btn sub tbz';b.textContent=p;b.dataset.p=p;
+    b.classList.toggle('on',p===threebettor);
+    b.onclick=()=>{threebettor=p;buildTb();render();};
+    bar.appendChild(b);
+  });
+  if(opts.length===0){const s=document.createElement('span');s.className='tbz';s.style.cssText='font-size:12px;color:#ffce6b';
+    s.textContent='この位置より後に3ベットできる人がいません';bar.appendChild(s);}
+}
+
+function buildRaiser(){
+  const bar=$('raiserBar');
+  bar.querySelectorAll('.rz').forEach(x=>x.remove());
+  const act=activeSet();
+  const opts=Object.keys(preIdx).filter(p=>act.has(p)&&preIdx[p]<preIdx[hero]);
+  if(!opts.includes(raiser))raiser=opts[opts.length-1]||null; // 直前の人をデフォルト
+  opts.forEach(p=>{
+    const b=document.createElement('button');b.className='btn sub rz';b.textContent=p;b.dataset.p=p;
+    b.classList.toggle('on',p===raiser);
+    b.onclick=()=>{raiser=p;buildRaiser();render();};
+    bar.appendChild(b);
+  });
+  if(opts.length===0){const s=document.createElement('span');s.className='rz';s.style.cssText='font-size:12px;color:#ffce6b';
+    s.textContent='この位置より前にレイザーはいません';bar.appendChild(s);}
+}
+
+function render(){
+  cells.forEach(c=>{const a=adviseFor(c.dataset.note);
+    c.className='cell bg-'+(a.code==='none'?'fold':a.code);
+    c.classList.toggle('sel',c.dataset.note===selNote);});
+  const box=$('answer');
+  if(!selNote){box.className='a-none';$('bigAct').textContent='手をタップ';
+    $('info').textContent='表で自分の手を1タップ。';return;}
+  if(scenario==='raise'&&!raiser){box.className='a-none';$('bigAct').textContent='—';
+    $('info').textContent='レイザーがいません。状況を切り替えてください。';return;}
+  if(scenario==='threebet'&&!threebettor){box.className='a-none';$('bigAct').textContent='—';
+    $('info').textContent='3ベットした人がいません。ポジションを変えてください。';return;}
+  const a=adviseFor(selNote);
+  box.className='a-'+a.code;
+  $('bigAct').textContent=a.label;
+  const sz=(a.size&&a.size!=='—')?` ／ サイズ：${a.size}`:'';
+  $('info').innerHTML=`<b>${selNote}</b>${sz}<br>${a.reason}`;
+}
+
+/* 席のオンオフ */
+function applySeats(){
+  const act=activeSet();
+  // ボタンの表示/非表示
+  document.querySelectorAll('.pos').forEach(b=>{b.style.display=act.has(b.dataset.p)?'':'none';});
+  // 自分が存在しない席にいたら、有効な席へ移す
+  if(!act.has(hero)){
+    hero=act.has('BTN')?'BTN':'SB';
+    document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x.dataset.p===hero));
+  }
+  $('seatNote').textContent = tableCount===2?'　＝ ヘッズアップ（SBがボタン）':`　＝ ${tableCount}人`;
+  buildRaiser();buildTb();render();
+}
+document.querySelectorAll('.cnt').forEach(b=>b.onclick=()=>{
+  tableCount=+b.dataset.c;
+  document.querySelectorAll('.cnt').forEach(x=>x.classList.toggle('on',x===b));
+  applySeats();
+});
+function updateBanner(){
+  const b=$('modeBanner');
+  if(pushFold){b.textContent='プッシュ/フォールド（≤15BB）：オールイン or 降り';b.style.background='#4a1c12';b.style.color='#ff9275';}
+  else if(beginnerMode){b.textContent='初心者卓（カモ卓）モード：価値重視で搾取';b.style.background='#3a2e0a';b.style.color='#ffd66b';}
+  else{b.textContent='通常版（GTOベース・100BB）';b.style.background='#1b242a';b.style.color='var(--sub)';}
+}
+$('cbBeginner').onchange=e=>{beginnerMode=e.target.checked;updateBanner();render();};
+$('cbPush').onchange=e=>{pushFold=e.target.checked;updateBanner();render();};
+
+updateBanner();
+applySeats();
+</script>
+</body>
+</html>
