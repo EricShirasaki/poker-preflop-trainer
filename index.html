@@ -194,7 +194,7 @@ function adviseRFI(h,hero){
     const key=rangeKeyFor(hero);
     if(key==='BB')return act('check','チェック','全員Fなら不戦勝。','—');
     let range;
-    if(tableCount===2&&hero==='SB')range=HU_PUSH;
+    if(tableCount===2&&hero==='SB')range=ante?HU_SB:HU_PUSH; // HU＋アンティはさらに広くプッシュ
     else if(ante)range=(key==='SB')?HU_PUSH:PUSH[ANTE_PUSH_SHIFT[key]];
     else range=PUSH[key];
     const note=ante?'アンティあり：デッドマネーが多いのでプッシュ範囲を広げる。降ろせて勝ち、コールされても勝負できる手。'
@@ -203,7 +203,7 @@ function adviseRFI(h,hero){
     return act('fold','フォールド','短いスタック：プッシュ圏外。降りて、より良い手で勝負する。','—');
   }
   if(tableCount===2&&hero==='SB'){
-    if(HU_SB.has(h))return act('raise','レイズ','ヘッズアップ：ボタン(SB)は超ワイドにオープン。捨てるのは最下位のゴミだけ。','約2〜2.5BB');
+    if(HU_SB.has(h)||ante)return act('raise','レイズ',ante?'ヘッズアップ＋アンティ：ボタン(SB)はほぼ何でもオープン。':'ヘッズアップ：ボタン(SB)は超ワイドにオープン。捨てるのは最下位のゴミだけ。','約2〜2.5BB');
     return act('fold','フォールド','ヘッズアップ：最下位クラスのゴミ。これは降りてOK。','—');
   }
   const key=rangeKeyFor(hero);
@@ -229,7 +229,7 @@ function adviseVsRaise(h,hero,raiser){
   if(tableCount===2){ // ヘッズアップ：BBが超ワイドなSBオープンに対応
     const t=getTier(h);
     if(t===1)return act('threebet','3ベット','ヘッズアップ：最強級は3ベットで価値を取る。','相手レイズの約3.5倍');
-    if(h.length===2||h.endsWith('s')||HU_SB.has(h))return act('call','コール','ヘッズアップ：BBは安く守れる。広いSBレンジに対して広くディフェンス。','—');
+    if(h.length===2||h.endsWith('s')||HU_SB.has(h)||ante)return act('call','コール',ante?'ヘッズアップ＋アンティ：価格が非常に良いので、ほぼ全部ディフェンス。':'ヘッズアップ：BBは安く守れる。広いSBレンジに対して広くディフェンス。','—');
     return act('fold','フォールド','ヘッズアップ：さすがに弱すぎる手だけ降りる。','—');
   }
   const t=getTier(h),loose=['CO','BTN','SB'].includes(rangeKeyFor(raiser)),ip=postIdx[hero]>postIdx[raiser];
