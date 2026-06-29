@@ -33,6 +33,10 @@
     border-radius:9px;padding:11px 6px;font-size:15px;font-weight:700;cursor:pointer}
   .btn.on{background:#0a7a4d;border-color:#0fa968;color:#fff}
   .btn.sub{font-size:13px;font-weight:600}
+  .bar.mini .btn{padding:6px 4px;font-size:13px;min-width:38px;font-weight:600}
+  .bar.mini .lbl{font-size:10px;margin-bottom:-3px}
+  .btn.quick{flex:1;background:#0e5c3a;border-color:#0fa968;color:#fff;font-size:16px;font-weight:800;padding:14px 8px}
+  .btn.quick:active{background:#0a7a4d}
   #raiserBar{display:none}
   .cb{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:var(--txt);cursor:pointer}
   .cb input{width:18px;height:18px;accent-color:#0fa968}
@@ -62,8 +66,14 @@
     <div class="info" id="info">下の表で自分の手を1タップ。上にサイズと理由が出ます。</div>
   </div>
 
-  <!-- ポジション -->
-  <div class="bar">
+  <!-- クイック操作（毎ハンド用） -->
+  <div class="bar" style="gap:8px">
+    <button class="btn quick" id="btnNext">次へ ▶ 席を移動</button>
+    <button class="btn quick" id="btnDec">− 人数</button>
+  </div>
+
+  <!-- ポジション（コンパクト） -->
+  <div class="bar mini" id="posBar">
     <div class="lbl">自分のポジション</div>
     <button class="btn pos" data-p="UTG">UTG</button>
     <button class="btn pos" data-p="MP">MP</button>
@@ -73,8 +83,8 @@
     <button class="btn pos" data-p="BB">BB</button>
   </div>
 
-  <!-- テーブルの人数 -->
-  <div class="bar">
+  <!-- テーブルの人数（コンパクト） -->
+  <div class="bar mini" id="cntBar">
     <div class="lbl">テーブルの人数（トーナメントで減っていく）<span id="seatNote" style="font-weight:400;color:var(--sub)"></span></div>
     <button class="btn cnt on" data-c="6">6人</button>
     <button class="btn cnt" data-c="5">5人</button>
@@ -433,6 +443,22 @@ document.querySelectorAll('.cnt').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.cnt').forEach(x=>x.classList.toggle('on',x===b));
   applySeats();
 });
+// 次へ：ボタンが左へ動く＝自分の席が1つ進む（BTN→CO→…→UTG→BB→SB→BTN）
+$('btnNext').onclick=()=>{
+  const act=[...activeSet()].sort((a,b)=>preIdx[a]-preIdx[b]);
+  const i=act.indexOf(hero);
+  hero=act[(i-1+act.length)%act.length];
+  document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x.dataset.p===hero));
+  buildRaiser();buildTb();render();
+};
+// 人数マイナス：誰か飛んだ
+$('btnDec').onclick=()=>{
+  if(tableCount>2){
+    tableCount--;
+    document.querySelectorAll('.cnt').forEach(x=>x.classList.toggle('on',+x.dataset.c===tableCount));
+    applySeats();
+  }
+};
 function updateBanner(){
   const b=$('modeBanner');
   if(pushFold){b.textContent='プッシュ/フォールド（≤15BB）：オールイン or 降り';b.style.background='#4a1c12';b.style.color='#ff9275';}
