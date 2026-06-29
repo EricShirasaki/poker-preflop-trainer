@@ -12,13 +12,13 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;background:var(--bg);color:var(--txt);
     font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Meiryo",sans-serif}
-  .wrap{max-width:680px;margin:0 auto;padding:10px}
-  /* 上部の答え（デカ表示） */
-  #answer{border-radius:14px;padding:14px 16px;margin-bottom:10px;
-    display:flex;align-items:center;gap:14px;min-height:74px;transition:background .12s}
-  #answer .big{font-size:32px;font-weight:800;letter-spacing:.01em;white-space:nowrap}
-  #answer .info{font-size:13px;line-height:1.45;opacity:.95}
-  #answer .info b{font-size:14px}
+  .wrap{max-width:560px;margin:0 auto;padding:6px}
+  /* 上部の答え */
+  #answer{border-radius:10px;padding:8px 10px;margin-bottom:6px;
+    display:flex;align-items:center;gap:10px;min-height:44px;transition:background .12s}
+  #answer .big{font-size:20px;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+  #answer .info{font-size:11px;line-height:1.35;opacity:.95}
+  #answer .info b{font-size:12px}
   .a-raise{background:var(--raise);color:#fff}
   .a-threebet{background:var(--threebet);color:#fff}
   .a-call{background:var(--call);color:#1a1300}
@@ -27,23 +27,23 @@
   .a-shove{background:var(--shove);color:#fff}
   .a-none{background:var(--panel);color:var(--sub)}
   /* ボタン列 */
-  .bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
-  .bar .lbl{font-size:11px;color:var(--sub);width:100%;margin-bottom:-2px}
-  .btn{flex:1;min-width:54px;background:#0f1418;color:var(--txt);border:1px solid var(--line);
-    border-radius:9px;padding:11px 6px;font-size:15px;font-weight:700;cursor:pointer}
+  .bar{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;align-items:center}
+  .bar .lbl{font-size:10px;color:var(--sub);width:100%;margin-bottom:-2px}
+  .btn{flex:1;min-width:44px;background:#0f1418;color:var(--txt);border:1px solid var(--line);
+    border-radius:7px;padding:7px 4px;font-size:13px;font-weight:700;cursor:pointer}
   .btn.on{background:#0a7a4d;border-color:#0fa968;color:#fff}
-  .btn.sub{font-size:13px;font-weight:600}
-  .bar.mini .btn{padding:6px 4px;font-size:13px;min-width:38px;font-weight:600}
-  .bar.mini .lbl{font-size:10px;margin-bottom:-3px}
-  .btn.quick{flex:1;background:#0e5c3a;border-color:#0fa968;color:#fff;font-size:16px;font-weight:800;padding:14px 8px}
+  .btn.sub{font-size:12px;font-weight:600}
+  .bar.mini .btn{padding:5px 3px;font-size:12px;min-width:34px;font-weight:600}
+  .bar.mini .lbl{font-size:9px;margin-bottom:-3px}
+  .btn.quick{flex:1;background:#0e5c3a;border-color:#0fa968;color:#fff;font-size:14px;font-weight:800;padding:9px 6px}
   .btn.quick:active{background:#0a7a4d}
   #raiserBar{display:none}
-  .cb{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:var(--txt);cursor:pointer}
-  .cb input{width:18px;height:18px;accent-color:#0fa968}
+  .cb{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--txt);cursor:pointer}
+  .cb input{width:15px;height:15px;accent-color:#0fa968}
   /* グリッド */
-  .grid{display:grid;grid-template-columns:repeat(13,1fr);gap:2px;margin-top:4px}
-  .cell{aspect-ratio:1/1;border-radius:4px;display:flex;align-items:center;justify-content:center;
-    font-size:clamp(8px,2.2vw,12px);font-weight:700;cursor:pointer;user-select:none;color:#06120c}
+  .grid{display:grid;grid-template-columns:repeat(13,1fr);gap:1px;margin:3px auto 0;max-width:330px}
+  .cell{aspect-ratio:1/1;border-radius:3px;display:flex;align-items:center;justify-content:center;
+    font-size:clamp(7px,2vw,11px);font-weight:700;cursor:pointer;user-select:none;color:#06120c}
   .cell.sel{outline:3px solid #fff;outline-offset:-1px}
   .bg-raise{background:var(--raise);color:#fff}
   .bg-threebet{background:var(--threebet);color:#fff}
@@ -51,10 +51,10 @@
   .bg-fold{background:#39454c;color:#8497a0}
   .bg-check{background:var(--check);color:#04201f}
   .bg-shove{background:var(--shove);color:#fff}
-  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--sub);justify-content:center}
-  .legend span{display:inline-flex;align-items:center;gap:5px}
-  .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
-  .hint{font-size:11px;color:var(--sub);text-align:center;margin:8px 0 2px}
+  .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:5px;font-size:10px;color:var(--sub);justify-content:center}
+  .legend span{display:inline-flex;align-items:center;gap:4px}
+  .sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .hint{font-size:10px;color:var(--sub);text-align:center;margin:4px 0 1px}
 </style>
 </head>
 <body>
@@ -111,17 +111,18 @@
     <button class="btn sub sc" data-s="threebet">3ベットされた</button>
   </div>
 
-  <!-- レイザー位置 -->
+  <!-- レイザーのタイプ -->
   <div class="bar" id="raiserBar">
-    <div class="lbl">レイズした人の位置</div>
+    <div class="lbl">レイズした人</div>
+    <button class="btn sub rl on" data-loose="0">前の位置（タイト）</button>
+    <button class="btn sub rl" data-loose="1">後ろ/BB（ルース）</button>
   </div>
 
   <!-- リンパー人数 -->
   <div class="bar" id="limpBar" style="display:none">
-    <div class="lbl">リンパー（コールで入った人）の人数</div>
+    <div class="lbl">リンパー（コールで入った人）</div>
     <button class="btn sub lp on" data-l="1">1人</button>
-    <button class="btn sub lp" data-l="2">2人</button>
-    <button class="btn sub lp" data-l="3">3人</button>
+    <button class="btn sub lp" data-l="2">2人以上</button>
   </div>
 
   <!-- 3ベットした人の位置 -->
@@ -129,7 +130,7 @@
     <div class="lbl">3ベットした人の位置</div>
   </div>
 
-  <div id="modeBanner" style="text-align:center;font-size:13px;font-weight:700;padding:6px;border-radius:8px;margin:2px 0 6px;background:#1b242a;color:var(--sub)">通常版（GTOベース・100BB）</div>
+  <div id="modeBanner" style="text-align:center;font-size:11px;font-weight:700;padding:4px;border-radius:6px;margin:2px 0 4px;background:#1b242a;color:var(--sub)">通常版（GTOベース・100BB）</div>
   <div class="hint">上三角＝スーテッド / 対角＝ペア / 下三角＝オフスート</div>
   <div class="grid" id="grid"></div>
 
@@ -238,38 +239,34 @@ function adviseRFI(h,hero){
   if(openRange.has(h))return act('raise','レイズ',`${hero}のオープンレンジ内${wider}${anteNote}。主導権を取って参加。`,hero==='SB'?'約3BB':'2.5〜3BB');
   return act('fold','フォールド',`${hero}のオープン外${wider}。強い手×良い位置に絞る。`,'—');
 }
-function adviseVsRaise(h,hero,raiser){
+function adviseVsRaise(h,loose){
+  const t=getTier(h);
   if(pushFold){ // 相手のレイズ＝事実上オールイン。コール or 降り
-    const t=getTier(h),loose=['CO','BTN','SB'].includes(rangeKeyFor(raiser)),isPair=(h.length===2);
     if(t<=2)return act('call','オールインにコール','十分強い。受けて勝負。','—');
-    if(isPair)return act('call','オールインにコール','ペアは勝率十分。プッシュに付き合う。','—');
-    if((loose||ante)&&(t===3||h.startsWith('A')))return act('call','オールインにコール',ante?'アンティあり：ポットが大きく価格が良いので、A入り・好スーテッドでもコール。':'相手のプッシュが広いので、A入り・好スーテッドでもコール。','—');
+    if(h.length===2)return act('call','オールインにコール','ペアは勝率十分。プッシュに付き合う。','—');
+    if((loose||ante)&&(t===3||h.startsWith('A')))return act('call','オールインにコール','相手のプッシュが広い/価格が良いので、A入り・好スーテッドでもコール。','—');
     return act('fold','フォールド','相手のオールインに対しコール圏外。降りる。','—');
   }
   if(tableCount===2){ // ヘッズアップ：BBが超ワイドなSBオープンに対応
-    const t=getTier(h);
     if(t===1)return act('threebet','3ベット','ヘッズアップ：最強級は3ベットで価値を取る。','相手レイズの約3.5倍');
     if(h.length===2||h.endsWith('s')||HU_SB.has(h)||ante)return act('call','コール',ante?'ヘッズアップ＋アンティ：価格が非常に良いので、ほぼ全部ディフェンス。':'ヘッズアップ：BBは安く守れる。広いSBレンジに対して広くディフェンス。','—');
     return act('fold','フォールド','ヘッズアップ：さすがに弱すぎる手だけ降りる。','—');
   }
-  const t=getTier(h),loose=['CO','BTN','SB'].includes(rangeKeyFor(raiser)),ip=postIdx[hero]>postIdx[raiser];
-  const sz=ip?'相手レイズの約3倍':'相手レイズの約4倍';
+  const sz='相手レイズの約3〜4倍';
   if(beginnerMode){
-    // 受け身な相手のレイズ＝本物。タイトに受ける
     if(t===1)return act('threebet','3ベット（バリュー）','カモ卓：最強クラスだけ価値を取りに3ベット。',sz);
-    if(t===2)return act('call','コール','カモ卓：受け身な相手のレイズは強い。降ろせないので3ベットせずコールで見る。','—');
+    if(t===2)return act('call','コール','カモ卓：受け身な相手のレイズは強い。3ベットせずコールで見る。','—');
     if(t===3&&(h.length===2||h.endsWith('s')))return act('call','コール','カモ卓：ペア/スーテッドはセット・フラッシュ狙いでコール可。','—');
     return act('fold','フォールド','カモ卓：受け身な相手の本物レイズに、半端な手で付き合わない。','—');
   }
-  if(t===1)return act('threebet','3ベット',`最強クラス。${ip?'IPで':''}バリュー3ベット。`,sz);
-  if(t===2){if(loose||ip)return act('threebet','3ベット',`${loose?'相手が広い':'ポジション有'}ので3ベットで主導権。`,sz);
-    return act('call','コール','タイトな前方レイズには3ベットせずコール。','—');}
-  if(t===3){const ob=h.endsWith('o');
-    if(!ip&&!loose&&ob)return act('fold','フォールド','オフスート役をOOPで前方レイズに合わせるのは不利。','—');
-    return act('call','コール',`${ip?'IPで':'価格的に'}プレイ可。セット・好フロップ狙い。`,'—');}
-  if(t===4){if(ip&&(loose||hero==='BTN'))return act('call','コール','IPなので安く参加しヒット時に取る。','—');
-    if(hero==='BB'&&(loose||ante))return act('call','コール',ante?'BBはアンティ込みで価格が良く、広くディフェンス。':'BBは価格でディフェンス。','—');
-    return act('fold','フォールド','投機手はポジション無いと利益化しにくい。','—');}
+  if(t===1)return act('threebet','3ベット','最強クラス。バリュー3ベット。',sz);
+  if(t===2)return loose?act('threebet','3ベット','相手のレンジが広いので3ベットで主導権。',sz)
+                     :act('call','コール','タイトな相手のレイズには3ベットせずコール。','—');
+  if(t===3)return (loose||h.length===2||h.endsWith('s'))
+                  ?act('call','コール','ペア/スーテッド、または相手が広いのでコール。セット・好フロップ狙い。','—')
+                  :act('fold','フォールド','タイトな相手に、オフスートの中途半端な手は降りる。','—');
+  if(t===4)return (loose||ante)?act('call','コール','相手が広い/価格が良いので安く参加しヒット時に取る。','—')
+                              :act('fold','フォールド','タイトな相手には、投機的すぎる手は見送り。','—');
   return act('fold','フォールド','レンジ外。見送り。','—');
 }
 
@@ -308,9 +305,9 @@ function adviseFacing3bet(h,hero,tb){
 }
 
 /* ===== 状態 ===== */
-let hero='BTN', scenario='rfi', raiser=null, selNote=null;
+let hero='BTN', scenario='rfi', selNote=null;
 let tableCount=6, beginnerMode=false, pushFold=false, ante=false;
-let numLimpers=1, threebettor=null;
+let numLimpers=1, threebettor=null, raiserLoose=false;
 /* アンティ時：プッシュ範囲を一段広い位置のものに（SBはHU並みに広い） */
 const ANTE_PUSH_SHIFT={UTG:'MP',MP:'CO',CO:'BTN',BTN:'SB',SB:'SB'};
 
@@ -338,8 +335,7 @@ function adviseFor(note){
   if(scenario==='rfi')return adviseRFI(note,hero);
   if(scenario==='limp')return adviseLimp(note,hero);
   if(scenario==='threebet'){if(!threebettor)return act('none','—','','');return adviseFacing3bet(note,hero,threebettor);}
-  if(!raiser)return act('none','—','','');
-  return adviseVsRaise(note,hero,raiser);
+  return adviseVsRaise(note,raiserLoose);
 }
 
 /* グリッド */
@@ -357,20 +353,24 @@ for(let i=0;i<13;i++)for(let j=0;j<13;j++){
 /* ポジション・状況ボタン */
 document.querySelectorAll('.pos').forEach(b=>b.onclick=()=>{
   hero=b.dataset.p;document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x===b));
-  buildRaiser();buildTb();render();
+  buildTb();render();
 });
 document.querySelectorAll('.sc').forEach(b=>b.onclick=()=>{
   scenario=b.dataset.s;document.querySelectorAll('.sc').forEach(x=>x.classList.toggle('on',x===b));
   $('raiserBar').style.display=scenario==='raise'?'flex':'none';
   $('limpBar').style.display=scenario==='limp'?'flex':'none';
   $('tbBar').style.display=scenario==='threebet'?'flex':'none';
-  if(scenario==='raise')buildRaiser();
   if(scenario==='threebet')buildTb();
   render();
 });
 document.querySelectorAll('.lp').forEach(b=>b.onclick=()=>{
   numLimpers=+b.dataset.l;
   document.querySelectorAll('.lp').forEach(x=>x.classList.toggle('on',x===b));
+  render();
+});
+document.querySelectorAll('.rl').forEach(b=>b.onclick=()=>{
+  raiserLoose=b.dataset.loose==='1';
+  document.querySelectorAll('.rl').forEach(x=>x.classList.toggle('on',x===b));
   render();
 });
 
@@ -391,22 +391,6 @@ function buildTb(){
     s.textContent='この位置より後に3ベットできる人がいません';bar.appendChild(s);}
 }
 
-function buildRaiser(){
-  const bar=$('raiserBar');
-  bar.querySelectorAll('.rz').forEach(x=>x.remove());
-  const act=activeSet();
-  const opts=Object.keys(preIdx).filter(p=>act.has(p)&&preIdx[p]<preIdx[hero]);
-  if(!opts.includes(raiser))raiser=opts[opts.length-1]||null; // 直前の人をデフォルト
-  opts.forEach(p=>{
-    const b=document.createElement('button');b.className='btn sub rz';b.textContent=p;b.dataset.p=p;
-    b.classList.toggle('on',p===raiser);
-    b.onclick=()=>{raiser=p;buildRaiser();render();};
-    bar.appendChild(b);
-  });
-  if(opts.length===0){const s=document.createElement('span');s.className='rz';s.style.cssText='font-size:12px;color:#ffce6b';
-    s.textContent='この位置より前にレイザーはいません';bar.appendChild(s);}
-}
-
 function render(){
   cells.forEach(c=>{const a=adviseFor(c.dataset.note);
     c.className='cell bg-'+(a.code==='none'?'fold':a.code);
@@ -414,8 +398,6 @@ function render(){
   const box=$('answer');
   if(!selNote){box.className='a-none';$('bigAct').textContent='手をタップ';
     $('info').textContent='表で自分の手を1タップ。';return;}
-  if(scenario==='raise'&&!raiser){box.className='a-none';$('bigAct').textContent='—';
-    $('info').textContent='レイザーがいません。状況を切り替えてください。';return;}
   if(scenario==='threebet'&&!threebettor){box.className='a-none';$('bigAct').textContent='—';
     $('info').textContent='3ベットした人がいません。ポジションを変えてください。';return;}
   const a=adviseFor(selNote);
@@ -436,7 +418,7 @@ function applySeats(){
     document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x.dataset.p===hero));
   }
   $('seatNote').textContent = tableCount===2?'　＝ ヘッズアップ（SBがボタン）':`　＝ ${tableCount}人`;
-  buildRaiser();buildTb();render();
+  buildTb();render();
 }
 document.querySelectorAll('.cnt').forEach(b=>b.onclick=()=>{
   tableCount=+b.dataset.c;
@@ -449,7 +431,7 @@ $('btnNext').onclick=()=>{
   const i=act.indexOf(hero);
   hero=act[(i-1+act.length)%act.length];
   document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x.dataset.p===hero));
-  buildRaiser();buildTb();render();
+  buildTb();render();
 };
 // 人数マイナス：誰か飛んだ
 $('btnDec').onclick=()=>{
