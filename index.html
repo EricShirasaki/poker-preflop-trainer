@@ -131,7 +131,7 @@
     <div class="lbl">3ベットした人の位置</div>
   </div>
 
-  <div id="modeBanner" style="text-align:center;font-size:11px;font-weight:700;padding:4px;border-radius:6px;margin:2px 0 4px;background:#1b242a;color:var(--sub)">通常版（GTOベース・100BB）</div>
+  <div id="modeBanner" style="text-align:center;font-size:11px;font-weight:700;padding:4px;border-radius:6px;margin:2px 0 4px;background:#1b242a;color:var(--sub)">通常版（PokerCoaching公開チャート・6max100BB）</div>
   <div class="hint">上三角＝スーテッド / 対角＝ペア / 下三角＝オフスート</div>
   <div class="grid" id="grid"></div>
 
@@ -156,12 +156,14 @@ function suited(h,km){const o=[],hi=ri(h);for(const k of RANKS){const ki=ri(k);i
 function offs(h,km){const o=[],hi=ri(h);for(const k of RANKS){const ki=ri(k);if(ki>hi&&ki<=ri(km))o.push(h+k+'o');}return o;}
 function S(...p){const s=new Set();for(const x of p){Array.isArray(x)?x.forEach(y=>s.add(y)):s.add(x);}return s;}
 
+/* オープン表＝PokerCoaching.com(Jonathan Little) 公開6max100BBチャートに完全一致
+   UTG=LJ17.6% / MP=HJ21.4% / CO27.8% / BTN43.5% / SB62.3% */
 const RFI={
-  UTG:S(pairs('2'),suited('A','2'),suited('K','T'),suited('Q','T'),'JTs','T9s','98s','87s','76s',offs('A','J'),'KQo'),
-  MP: S(pairs('2'),suited('A','2'),suited('K','9'),suited('Q','9'),suited('J','9'),suited('T','8'),suited('9','7'),'87s','76s','65s',offs('A','T'),offs('K','J'),'QJo'),
-  CO: S(pairs('2'),suited('A','2'),suited('K','7'),suited('Q','8'),suited('J','8'),suited('T','8'),suited('9','7'),suited('8','6'),suited('7','5'),suited('6','4'),'54s',offs('A','9'),offs('K','T'),offs('Q','T'),'JTo'),
-  BTN:S(pairs('2'),suited('A','2'),suited('K','2'),suited('Q','5'),suited('J','7'),suited('T','7'),suited('9','6'),suited('8','6'),suited('7','5'),suited('6','4'),suited('5','3'),'43s',offs('A','2'),offs('K','8'),offs('Q','9'),offs('J','9'),'T9o','98o'),
-  SB: S(pairs('2'),suited('A','2'),suited('K','5'),suited('Q','7'),suited('J','8'),suited('T','8'),suited('9','7'),suited('8','6'),suited('7','5'),'65s','54s',offs('A','4'),offs('K','9'),offs('Q','9'),'JTo','T9o')
+  UTG:S(pairs('6'),suited('A','3'),suited('K','8'),suited('Q','9'),suited('J','9'),'T9s',offs('A','T'),offs('K','J'),'QJo'),
+  MP: S(pairs('5'),suited('A','2'),suited('K','6'),suited('Q','9'),suited('J','9'),'T9s','98s','87s','76s',offs('A','T'),offs('K','T'),offs('Q','T')),
+  CO: S(pairs('3'),suited('A','2'),suited('K','3'),suited('Q','6'),suited('J','8'),suited('T','7'),suited('9','7'),'87s','76s',offs('A','8'),offs('K','T'),offs('Q','T'),'JTo'),
+  BTN:S(pairs('3'),suited('A','2'),suited('K','2'),suited('Q','3'),suited('J','4'),suited('T','6'),suited('9','6'),suited('8','5'),suited('7','5'),suited('6','4'),suited('5','3'),offs('A','4'),offs('K','8'),offs('Q','9'),offs('J','9'),offs('T','8'),'98o'),
+  SB: S(pairs('2'),suited('A','2'),suited('K','2'),suited('Q','2'),suited('J','2'),suited('T','3'),suited('9','4'),suited('8','4'),suited('7','4'),suited('6','3'),suited('5','3'),'43s',offs('A','2'),offs('K','4'),offs('Q','5'),offs('J','7'),offs('T','7'),offs('9','6'),offs('8','6'),'76o')
 };
 
 /* 初心者卓（カモ卓）用：価値重視。弱いオフスートを切り、ペア＆スーテッドを残す */
@@ -205,7 +207,7 @@ const ANTE_OPEN={
 const TIER1=new Set(['AA','KK','QQ','AKs','AKo']);
 const TIER2=new Set(['JJ','TT','AQs','AQo','AJs','KQs']);
 const TIER3=new Set(['99','88','77','ATs','KJs','QJs','JTs','AJo','KQo','A5s','A4s']);
-function getTier(h){if(TIER1.has(h))return 1;if(TIER2.has(h))return 2;if(TIER3.has(h))return 3;if(RFI.BTN.has(h))return 4;return 5;}
+function getTier(h){if(TIER1.has(h))return 1;if(TIER2.has(h))return 2;if(TIER3.has(h))return 3;if(h.length===2)return 4;if(RFI.BTN.has(h))return 4;return 5;}
 
 function act(code,label,reason,size){return{code,label,reason,size};}
 function adviseRFI(h,hero){
@@ -288,7 +290,7 @@ function adviseLimp(h,hero){
   if(isoStrong)return act('raise','レイズ（アイソレート）',isoNote,sz);
   // 投機的に安く見る。多人数ほどインプライドオッズが旨いので参加を広げる
   const late=['CO','BTN','SB'].includes(rangeKeyFor(hero));
-  if((isPair||isSuited)&&RFI.BTN.has(h)){
+  if(isPair||(isSuited&&RFI.BTN.has(h))){
     if(late||many)return act('call','コール（オーバーリンプ）',
       `ペア・スーテッドで安く参加。${many?'リンパーが多く、セット/フラッシュのインプライドオッズが大きい。':'ポジションがあるので安く見てセット・フラッシュを狙う。'}`,'リンパーに合わせる（安い）');
     return act('fold','フォールド','投機手だが後ろに人が多くポジションが悪い。無理に乗らず降りる。','—');
@@ -458,7 +460,7 @@ function updateBanner(){
   const b=$('modeBanner');
   if(pushFold){b.textContent='プッシュ/フォールド（≤15BB）：オールイン or 降り';b.style.background='#4a1c12';b.style.color='#ff9275';}
   else if(beginnerMode){b.textContent='初心者卓（カモ卓）モード：価値重視で搾取';b.style.background='#3a2e0a';b.style.color='#ffd66b';}
-  else{b.textContent='通常版（GTOベース・100BB）';b.style.background='#1b242a';b.style.color='var(--sub)';}
+  else{b.textContent='通常版（PokerCoaching公開チャート・6max100BB）';b.style.background='#1b242a';b.style.color='var(--sub)';}
 }
 $('cbBeginner').onchange=e=>{beginnerMode=e.target.checked;updateBanner();render();};
 $('cbPush').onchange=e=>{pushFold=e.target.checked;updateBanner();render();};
